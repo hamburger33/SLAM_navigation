@@ -1,0 +1,2 @@
+slam_navigator
+-DCATKIN_DEVEL_PREFIX=/home/yaya/slam_navigation/devel -DCMAKE_INSTALL_PREFIX=/home/yaya/slam_navigation/install -G Unix Makefiles

@@ -1,0 +1,40 @@
+<launch>
+
+    <!-- 启动雷达里程计（point_lio_unilidar） -->
+    <node pkg="point_lio_unilidar" type="point_lio_unilidar_node" name="point_lio" output="screen">
+    <param name="publish_odom" value="true" />
+    <remap from="odom" to="/pointlio/odom" /> <!-- 确保发布到指定话题 -->
+    </node>
+
+    <!-- 启动地图加载器 -->
+    <node pkg="slam_navigator" type="map_loader" name="map_loader" output="screen">
+      <param name="pcd_file" value="$(find point_lio_unilidar)/PCD/scans.pcd" />
+      <param name="map_width" value="600" />
+      <param name="map_height" value="600" />
+      <param name="resolution" value="0.05" />
+      <param name="height_threshold" value="1" /> <!-- 过滤高于1m的点 -->
+    </node>
+
+    <!-- 启动目标监听器 -->
+    <node pkg="slam_navigator" type="goal_listener" name="goal_listener" output="screen"/>
+
+    <!-- 启动控制节点，用于发送控制命令 -->
+    <node pkg="slam_navigator" type="navigation_node" name="navigation_node" output="screen"/>
+
+    <!-- 启动 move_base -->
+    <node pkg="move_base" type="move_base" name="move_base" output="screen">
+    <rosparam command="load" file="$(find navigation)/config/move_base/move_base_param.yaml" />
+    <rosparam command="load" file="$(find navigation)/config/move_base/global_costmap.yaml" />
+    <rosparam command="load" file="$(find navigation)/config/move_base/local_costmap.yaml" />
+    <rosparam command="load" file="$(find navigation)/config/move_base/global_planner.yaml" />
+    <rosparam command="load" file="$(find navigation)/config/move_base/local_planner.yaml" />
+    <remap from="odom" to="/pointlio/odom" /> <!-- 重定向里程计话题 -->
+    </node>
+
+    <!-- 将发布的全局固定坐标系转换为map -->
+    <node pkg="tf" type="static_transform_publisher" name="camera_init_to_map"
+          args="0 0 0 0 0 0 map camera_init 100" />
+    <!-- 将发布的机器人本体坐标系转换为base_link，需根据原点位置修改args -->
+    <node pkg="tf" type="static_transform_publisher" name="aft_to_base"
+          args="0 0 0 0 0 0 aft_mapped base_link 100" />
+</launch>
