@@ -1,0 +1,2 @@
+# 基于cartographer建图的ros导航
+接收下位机发送的编码器信息并转化为里程计话题，与cartographer发布的位姿融合后发布里程计。最后将mov_base输出的导航控制信息转化为uart信息发送给下位机。
