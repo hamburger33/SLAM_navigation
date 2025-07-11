@@ -1,0 +1,38 @@
+<!-- CAN通信调试测试启动文件 -->
+<!-- 仅启动CAN数据接收和调试相关节点，不启动导航系统 -->
+<launch>
+    <!-- 设置调试模式参数 -->
+    <param name="use_sim_time" value="false"/>
+    
+    <!-- 启动CAN数据接收节点 - 开启调试模式 -->
+    <node name="can_data_receiver" pkg="real" type="can_data_receiver_node" output="screen" required="true">
+        <!-- CAN接口配置 -->
+        <param name="can_interface" value="can0" />
+        <param name="can_baudrate" value="500000" />
+        
+        <!-- 数据发布话题 -->
+        <param name="chassis_data_topic" value="/chassis_data" />
+        <param name="encoder_data_topic" value="/encoder_data" />
+        
+        <!-- 关闭模拟模式，使用真实CAN数据 -->
+        <param name="simulation_mode" value="false" />
+        
+        <!-- 开启调试输出 -->
+        <param name="debug_mode" value="true" />
+    </node>
+    
+    <!-- 启动rqt工具用于数据可视化 -->
+    <node name="rqt_plot" pkg="rqt_plot" type="rqt_plot" args="/chassis_data" if="false"/>
+    
+    <!-- 记录调试数据到rosbag -->
+    <node name="rosbag_record" pkg="rosbag" type="record" 
+          args="-o /tmp/can_debug /chassis_data /encoder_data" 
+          if="false"/>
+          
+    <!-- 打印调试信息 -->
+    <node name="rostopic_echo_chassis" pkg="rostopic" type="rostopic" 
+          args="echo /chassis_data" output="screen" if="false"/>
+    <node name="rostopic_echo_encoder" pkg="rostopic" type="rostopic" 
+          args="echo /encoder_data" output="screen" if="false"/>
+
+</launch>

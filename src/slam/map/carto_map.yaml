@@ -1,4 +1,4 @@
-image: /home/tongronglei/work/xju-robot/src/slam/map/carto_map.pgm
+image: /home/yaya/simu_ws/xju-robot/src/slam/map/carto_map.pgm
 resolution: 0.050000
 origin: [-6.820786, -4.425838, 0.000000]
 negate: 0

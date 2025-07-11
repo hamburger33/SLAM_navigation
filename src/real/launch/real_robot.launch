@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- 参数配置 -->
+  <arg name="use_lidar" default="true"/>
+  <arg name="lidar_topic" default="/scan"/>
+  <arg name="use_wheel_odom" default="true"/>
+  
+  <!-- CAN数据接收节点 -->
+  <node name="can_data_receiver_node" pkg="real" type="can_data_receiver_node" output="screen">
+    <param name="can_interface" value="can0"/>
+    <param name="chassis_data_topic" value="/chassis_data"/>
+    <param name="encoder_data_topic" value="/encoder_data"/>
+    <param name="can_baudrate" value="500000"/>
+  </node>
+  
+  <!-- 轮式里程计计算节点 -->
+  <node name="wheel_odom_calculator_node" pkg="real" type="wheel_odom_calculator_node" output="screen" if="$(arg use_wheel_odom)">
+    <param name="base_frame" value="base_link"/>
+    <param name="odom_frame" value="wheel_odom"/>
+    <param name="wheel_odom_topic" value="/wheel/odom"/>
+    <param name="publish_tf" value="true"/>
+    <param name="encoder_data_topic" value="/encoder_data"/>
+  </node>
+
+  <!-- 激光雷达驱动 (需要根据实际激光雷达型号调整) -->
+  <group if="$(arg use_lidar)">
+    <!-- 示例: RPLidar -->
+    <!-- <include file="$(find rplidar_ros)/launch/rplidar.launch"/> -->
+    
+    <!-- 示例: Hokuyo -->
+    <!-- <node name="hokuyo_node" pkg="hokuyo_node" type="hokuyo_node" output="screen">
+      <param name="port" value="/dev/ttyACM0"/>
+      <param name="frame_id" value="laser_link"/>
+    </node> -->
+    
+    <!-- 示例: Velodyne -->
+    <!-- <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch"/> -->
+    
+    <!-- 话题重映射 -->
+    <remap from="/laser/scan" to="$(arg lidar_topic)"/>
+  </group>
+
+  <!-- 移动机器人导航 - 沿用仿真的move_base_flex配置 -->
+  <include file="$(find pnc)/launch/move_base_flex.launch">
+    <!-- 重映射话题以使用实物传感器数据 -->
+    <remap from="/scan" to="$(arg lidar_topic)"/>
+    <remap from="/odom" to="/wheel/odom" if="$(arg use_wheel_odom)"/>
+    
+    <!-- 使用实物机器人的配置参数 -->
+    <arg name="config_path" value="$(find real)/config"/>
+  </include>
+
+  <!-- 路径规划服务 - 沿用现有的coverage_path_planner -->
+  <include file="$(find coverage_path_planner)/launch/path_planning.launch"/>
+
+  <!-- TF变换 -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_laser"
+        args="0.0 0.0 0.1 0.0 0.0 0.0 base_link laser_link"/>
+
+</launch>
